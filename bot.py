@@ -53,7 +53,8 @@ async def check_time(message: Message, last_post_time):
 
 
 async def check_allowed_hashtags(message: Message):
-    hashtags_in_text = set(re.findall(r"#\w+", message.text.lower()))
+    text = message.text or message.caption
+    hashtags_in_text = set(re.findall(r"#\w+", text.lower()))
 
     if not hashtags_in_text & ALLOWED_HASHTAGS and message.from_user.id != ADMIN_ID:
         try:
