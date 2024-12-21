@@ -1,4 +1,4 @@
-from asyncio import run
+import asyncio
 import logging
 import re
 from datetime import timedelta, datetime
@@ -9,16 +9,21 @@ from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest
 
-TOKEN = None
+TOKEN = '8125744051:AAFT9zN5kSae7kYVVyjB1uTh5QOvutb70Co'
 TRACED_TOPIC = None
 ADMIN_ID = None
 ALLOWED_HASHTAGS = {"#продам", "#куплю", "#допомога"}
+DELAY = 300 # 5 min
 
 user_posts = dict()
 
 bot = Bot(TOKEN)
 dp = Dispatcher()
 
+
+async def delete_message_after_delay(message: Message):
+    await asyncio.sleep(DELAY)
+    await message.delete()
 
 def return_link_to_user(user_data):
     if user_data.username is None:
@@ -40,10 +45,11 @@ async def check_time(message: Message, last_post_time):
 
         link_to_user = return_link_to_user(message.from_user)
 
-        await message.answer(
+        sended_message = await message.answer(
             f'{link_to_user} ваше объявление было удалено. Следующие объявление можно опубликовать через {hours} ч, {minutes} мин, {seconds} сек.',
             parse_mode=ParseMode.MARKDOWN)
-
+        
+        asyncio.create_task(delete_message_after_delay(sended_message))
 
 
 async def check_allowed_hashtags(message: Message):
@@ -61,9 +67,11 @@ async def check_allowed_hashtags(message: Message):
                 until_date=datetime.now() + timedelta(minutes=1))
 
             link_to_user = return_link_to_user(message.from_user)
-            await message.answer(
+            sended_message = await message.answer(
                 f'{link_to_user} вам выдан мут на 1 минуту за нарушение правил',
                 parse_mode=ParseMode.MARKDOWN)
+            
+            asyncio.create_task(delete_message_after_delay(sended_message))
 
         except TelegramBadRequest as e:
             logging.error(e)
@@ -93,4 +101,4 @@ async def new_message(message: Message):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    run(dp.start_polling(bot))
+    asyncio.run(dp.start_polling(bot))
